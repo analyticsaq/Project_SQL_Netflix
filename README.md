@@ -6,6 +6,10 @@
 
 This project involves a comprehensive analysis of Netflix's movies and TV shows dataset using SQL. The goal is to extract actionable insights and answer key business questions related to content distribution, ratings, genres, and more.
 
+This README outlines the project’s objectives, business questions, SQL solutions, and key findings.
+
+---
+
 ## 🎯 Objectives
 
 - Analyze the distribution of content types (Movies vs TV Shows)
@@ -14,16 +18,20 @@ This project involves a comprehensive analysis of Netflix's movies and TV shows 
 - Explore content by specific directors, actors, and keywords
 - Categorize content and extract business-ready insights
 
+---
+
 ## 📁 Dataset
 
-- **Source:** [Kaggle - Netflix Movies and TV Shows Dataset](https://www.kaggle.com/datasets/shivamb/netflix-shows)
-- **Format:** CSV
-- **Size:** [Specify if known - e.g., "Contains X movies and Y TV shows"]
-- **Note:** Data was cleaned and structured into a PostgreSQL-compatible schema
+- Source: Kaggle - Netflix Movies and TV Shows Dataset
+- Format: CSV
+- Cleaned and structured into a PostgreSQL-compatible schema
 
-## 🧱 Database Schema
+---
+
+## 🧱 Table Schema
 
 ```sql
+DROP TABLE IF EXISTS netflix;
 CREATE TABLE netflix (
     show_id      VARCHAR(5),
     type         VARCHAR(10),
@@ -38,146 +46,222 @@ CREATE TABLE netflix (
     listed_in    VARCHAR(250),
     description  VARCHAR(550)
 );
-🛠️ Installation & Setup
-Clone the repository:
+```
 
-bash
-git clone https://github.com/your-username/netflix-sql-analysis.git
-cd netflix-sql-analysis
-Import the dataset into PostgreSQL:
+---
 
-bash
-psql -d your_database -f schema.sql
-\copy netflix FROM 'netflix_titles.csv' DELIMITER ',' CSV HEADER;
-🔍 SQL Analysis
-The project includes analysis of various aspects of Netflix content:
+## 🧠 Business Questions & SQL Solutions
 
-Content Distribution
-sql
-## 📌 Overview
-
-This project involves a comprehensive analysis of Netflix's movies and TV shows dataset using SQL. The goal is to extract actionable insights and answer key business questions related to content distribution, ratings, genres, and more.
-
-## 🎯 Objectives
-
-- Analyze the distribution of content types (Movies vs TV Shows)
-- Identify the most common ratings for each type of content
-- Analyze content by release years, countries, and durations
-- Explore content by specific directors, actors, and keywords
-- Categorize content and extract business-ready insights
-
-## 📁 Dataset
-
-- **Source:** [Kaggle - Netflix Movies and TV Shows Dataset](https://www.kaggle.com/datasets/shivamb/netflix-shows)
-- **Format:** CSV
-- **Size:** [Specify if known - e.g., "Contains X movies and Y TV shows"]
-- **Note:** Data was cleaned and structured into a PostgreSQL-compatible schema
-
-## 🧱 Database Schema
+### 1️⃣ Count the Number of Movies vs TV Shows
 
 ```sql
-CREATE TABLE netflix (
-    show_id      VARCHAR(5),
-    type         VARCHAR(10),
-    title        VARCHAR(250),
-    director     VARCHAR(550),
-    casts        VARCHAR(1050),
-    country      VARCHAR(550),
-    date_added   VARCHAR(55),
-    release_year INT,
-    rating       VARCHAR(15),
-    duration     VARCHAR(15),
-    listed_in    VARCHAR(250),
-    description  VARCHAR(550)
-);
-🛠️ Installation & Setup
-Clone the repository:
-
-bash
-git clone https://github.com/your-username/netflix-sql-analysis.git
-cd netflix-sql-analysis
-Import the dataset into PostgreSQL:
-
-bash
-psql -d your_database -f schema.sql
-\copy netflix FROM 'netflix_titles.csv' DELIMITER ',' CSV HEADER;
-🔍 SQL Analysis
-The project includes analysis of various aspects of Netflix content:
-
-Content Distribution
-sql
--- Count of Movies vs TV Shows
-SELECT type, COUNT(*) 
+SELECT 
+    type,
+    COUNT(*) 
 FROM netflix 
 GROUP BY 1;
-Rating Analysis
-sql
--- Most common rating for each content type
+```
+
+---
+
+### 2️⃣ Most Common Rating for Each Content Type
+
+```sql
 WITH RatingCounts AS (
     SELECT type, rating, COUNT(*) AS rating_count
     FROM netflix
     GROUP BY type, rating
+),
+RankedRatings AS (
+    SELECT *, RANK() OVER (PARTITION BY type ORDER BY rating_count DESC) AS rank
+    FROM RatingCounts
 )
--- [Full query in queries.sql]
-Geographical Analysis
-sql
--- Top 5 countries with the most content
+SELECT type, rating AS most_frequent_rating
+FROM RankedRatings
+WHERE rank = 1;
+```
+
+---
+
+### 3️⃣ Movies Released in a Specific Year (e.g., 2020)
+
+```sql
+SELECT * 
+FROM netflix 
+WHERE release_year = 2020;
+```
+
+---
+
+### 4️⃣ Top 5 Countries with the Most Content
+
+```sql
 SELECT * 
 FROM (
-    SELECT UNNEST(STRING_TO_ARRAY(country, ',')) AS country,
-    COUNT(*) AS total_content
+    SELECT 
+        UNNEST(STRING_TO_ARRAY(country, ',')) AS country,
+        COUNT(*) AS total_content
     FROM netflix
     GROUP BY 1
 ) AS t1
 WHERE country IS NOT NULL
 ORDER BY total_content DESC
 LIMIT 5;
-[Additional query categories...]
-For all queries, see the queries.sql file.
+```
 
-📊 Key Findings
-Content Distribution: [Brief summary of findings]
+---
 
-Rating Patterns: [Brief summary of findings]
+### 5️⃣ Longest Movie on Netflix
 
-Geographical Insights: The United States, India, and the United Kingdom produce the most content on Netflix
+```sql
+SELECT * 
+FROM netflix 
+WHERE type = 'Movie' 
+ORDER BY SPLIT_PART(duration, ' ', 1)::INT DESC;
+```
 
-Temporal Trends: [Brief summary of release patterns over time]
+---
 
-Content Categories: Documentaries and International content dominate certain markets
+### 6️⃣ Content Added in the Last 5 Years
 
-📈 Visualizations
-[Optional: Describe or link to any visualizations created from this data]
+```sql
+SELECT * 
+FROM netflix 
+WHERE TO_DATE(date_added, 'Month DD, YYYY') >= CURRENT_DATE - INTERVAL '5 years';
+```
 
-🚀 How to Use This Project
-Examine the SQL queries in the queries.sql file
+---
 
-Run the queries in your PostgreSQL environment
+### 7️⃣ All Content by Director 'Rajiv Chilaka'
 
-Modify parameters (years, countries, etc.) to explore different aspects
+```sql
+SELECT * 
+FROM (
+    SELECT *, UNNEST(STRING_TO_ARRAY(director, ',')) AS director_name
+    FROM netflix
+) AS t 
+WHERE director_name = 'Rajiv Chilaka';
+```
 
-Use the insights for:
+---
 
-Content strategy analysis
+### 8️⃣ TV Shows with More Than 5 Seasons
 
-Market research
+```sql
+SELECT * 
+FROM netflix 
+WHERE type = 'TV Show' AND SPLIT_PART(duration, ' ', 1)::INT > 5;
+```
 
-Academic learning of SQL
+---
 
-💡 Skills Demonstrated
-SQL query writing and optimization
+### 9️⃣ Number of Content Items per Genre
 
-Data analysis and interpretation
+```sql
+SELECT 
+    UNNEST(STRING_TO_ARRAY(listed_in, ',')) AS genre,
+    COUNT(*) AS total_content
+FROM netflix
+GROUP BY 1;
+```
 
-PostgreSQL database management
+---
 
-Data cleaning and preparation
+### 🔟 Top 5 Years with Highest Average Content Released in India
 
-Business intelligence reporting
+```sql
+SELECT 
+    country,
+    release_year,
+    COUNT(show_id) AS total_release,
+    ROUND(
+        COUNT(show_id)::numeric /
+        (SELECT COUNT(show_id) FROM netflix WHERE country = 'India')::numeric * 100, 2
+    ) AS avg_release
+FROM netflix
+WHERE country = 'India'
+GROUP BY country, release_year
+ORDER BY avg_release DESC
+LIMIT 5;
+```
 
-📚 Resources
-PostgreSQL Documentation
+---
 
-Kaggle Netflix Dataset
+### 1️⃣1️⃣ Movies That Are Documentaries
 
-SQL Style Guide
+```sql
+SELECT * 
+FROM netflix 
+WHERE listed_in LIKE '%Documentaries';
+```
+
+---
+
+### 1️⃣2️⃣ Content Without a Director
+
+```sql
+SELECT * 
+FROM netflix 
+WHERE director IS NULL;
+```
+
+---
+
+### 1️⃣3️⃣ Movies Featuring 'Salman Khan' in the Last 10 Years
+
+```sql
+SELECT * 
+FROM netflix 
+WHERE casts LIKE '%Salman Khan%' 
+  AND release_year > EXTRACT(YEAR FROM CURRENT_DATE) - 10;
+```
+
+---
+
+### 1️⃣4️⃣ Top 10 Actors in Indian Content
+
+```sql
+SELECT 
+    UNNEST(STRING_TO_ARRAY(casts, ',')) AS actor,
+    COUNT(*)
+FROM netflix
+WHERE country = 'India'
+GROUP BY actor
+ORDER BY COUNT(*) DESC
+LIMIT 10;
+```
+
+---
+
+### 1️⃣5️⃣ Categorize Content Based on Keywords ('kill' or 'violence')
+
+```sql
+SELECT 
+    category,
+    COUNT(*) AS content_count
+FROM (
+    SELECT 
+        CASE 
+            WHEN description ILIKE '%kill%' OR description ILIKE '%violence%' THEN 'Bad'
+            ELSE 'Good'
+        END AS category
+    FROM netflix
+) AS categorized_content
+GROUP BY category;
+```
+
+---
+
+## 📌 Findings & Conclusions
+
+- **Content Type Distribution:** Netflix features a diverse mix of Movies and TV Shows.
+- **Popular Ratings:** Common ratings highlight the platform’s family-oriented and adult content segments.
+- **Geographical Insights:** U.S. and India dominate content production, with others following closely.
+- **Keyword-Based Categorization:** Helps identify content tone and audience type.
+- **Director/Actor-Based Filters:** Useful for niche recommendations and profiling.
+
+---
+
+## 🚀 Final Thoughts
+
+This SQL-based exploratory data analysis offers a strategic overview of Netflix’s content library. These insights can help content strategists, analysts, and business stakeholders make informed decisions around content curation, user targeting, and market focus.
