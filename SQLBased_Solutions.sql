@@ -188,4 +188,5 @@ Select * FROM netflix;
 		        END AS category
 		    FROM netflix
 		) AS categorized_content
+
 		GROUP BY category;
