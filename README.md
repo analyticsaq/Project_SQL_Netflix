@@ -54,13 +54,65 @@ The project includes analysis of various aspects of Netflix content:
 
 Content Distribution
 sql
---## 1 Count of Movies vs TV Shows
+## 📌 Overview
+
+This project involves a comprehensive analysis of Netflix's movies and TV shows dataset using SQL. The goal is to extract actionable insights and answer key business questions related to content distribution, ratings, genres, and more.
+
+## 🎯 Objectives
+
+- Analyze the distribution of content types (Movies vs TV Shows)
+- Identify the most common ratings for each type of content
+- Analyze content by release years, countries, and durations
+- Explore content by specific directors, actors, and keywords
+- Categorize content and extract business-ready insights
+
+## 📁 Dataset
+
+- **Source:** [Kaggle - Netflix Movies and TV Shows Dataset](https://www.kaggle.com/datasets/shivamb/netflix-shows)
+- **Format:** CSV
+- **Size:** [Specify if known - e.g., "Contains X movies and Y TV shows"]
+- **Note:** Data was cleaned and structured into a PostgreSQL-compatible schema
+
+## 🧱 Database Schema
+
+```sql
+CREATE TABLE netflix (
+    show_id      VARCHAR(5),
+    type         VARCHAR(10),
+    title        VARCHAR(250),
+    director     VARCHAR(550),
+    casts        VARCHAR(1050),
+    country      VARCHAR(550),
+    date_added   VARCHAR(55),
+    release_year INT,
+    rating       VARCHAR(15),
+    duration     VARCHAR(15),
+    listed_in    VARCHAR(250),
+    description  VARCHAR(550)
+);
+🛠️ Installation & Setup
+Clone the repository:
+
+bash
+git clone https://github.com/your-username/netflix-sql-analysis.git
+cd netflix-sql-analysis
+Import the dataset into PostgreSQL:
+
+bash
+psql -d your_database -f schema.sql
+\copy netflix FROM 'netflix_titles.csv' DELIMITER ',' CSV HEADER;
+🔍 SQL Analysis
+The project includes analysis of various aspects of Netflix content:
+
+Content Distribution
+sql
+-- Count of Movies vs TV Shows
 SELECT type, COUNT(*) 
 FROM netflix 
 GROUP BY 1;
 Rating Analysis
 sql
---## 2 Most common rating for each content type
+-- Most common rating for each content type
 WITH RatingCounts AS (
     SELECT type, rating, COUNT(*) AS rating_count
     FROM netflix
@@ -124,6 +176,8 @@ Data cleaning and preparation
 Business intelligence reporting
 
 📚 Resources
+PostgreSQL Documentation
 
 Kaggle Netflix Dataset
 
+SQL Style Guide
