@@ -54,13 +54,13 @@ The project includes analysis of various aspects of Netflix content:
 
 Content Distribution
 sql
--- Count of Movies vs TV Shows
+--## 1 Count of Movies vs TV Shows
 SELECT type, COUNT(*) 
 FROM netflix 
 GROUP BY 1;
 Rating Analysis
 sql
--- Most common rating for each content type
+--## 2 Most common rating for each content type
 WITH RatingCounts AS (
     SELECT type, rating, COUNT(*) AS rating_count
     FROM netflix
